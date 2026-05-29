@@ -19,7 +19,7 @@ import com.mtabo.necta.parser.parseDistricts
 import com.mtabo.necta.parser.parseRegions
 import org.jsoup.nodes.Document
 
-class NectaRepository (
+class NectaRepository  (
     private val jsoupClient: JsoupClient,
     private val urlProvider: UrlProvider
 ) {
@@ -90,12 +90,12 @@ class NectaRepository (
 
     // --- School Results (Flow streaming) ---
     suspend fun fetchSchoolResult(
-        exams: ExamType,
+        examType: ExamType,
         year: Int,
         schoolCode: String
     ): FetchResult<SchoolResultsStream> {
 
-        val url = urlProvider.getSchoolResultsUrl(exams, year, schoolCode)
+        val url = urlProvider.getSchoolResultsUrl(examType, year, schoolCode)
 
         return when (val result = jsoupClient.fetchDocument(url)) {
 
@@ -103,9 +103,9 @@ class NectaRepository (
                 val doc = result.data
 
                 val performance = PerformanceParser
-                    .parsePerformance(doc, exams, year)
+                    .parsePerformance(doc, examType, year)
 
-                val students: Flow<StudentResult> = when (exams) {
+                val students: Flow<StudentResult> = when (examType) {
 
                     ExamType.ACSEE, ExamType.CSEE ->
                         CseeAcseeParser.parseResults(
@@ -175,6 +175,14 @@ class NectaRepository (
         )
     }
 
+    companion object {
+        fun create(): NectaRepository {
+            return NectaRepository(
+                jsoupClient = JsoupClient,
+                urlProvider = UrlProvider
+            )
+        }
+    }
 }
 
 // --- Domain wrapper ---
