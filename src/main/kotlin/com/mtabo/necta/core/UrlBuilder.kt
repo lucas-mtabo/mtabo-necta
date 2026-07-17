@@ -19,6 +19,7 @@ object UrlBuilder {
                     "https://maktaba.tetea.org/exam-results/ACSEE$year/${normalizedId}.htm"
                 2025 ->
                     "https://onlinesys.necta.go.tz/results/$year/acsee/results/$normalizedId.htm"
+                2026 -> "https://matokeo.necta.go.tz/results/$year/acsee/results/$normalizedId.htm"
                 else -> null
             }
 
