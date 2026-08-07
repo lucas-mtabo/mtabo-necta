@@ -1,6 +1,6 @@
 package com.mtabo.necta.parser
 
-import com.mtabo.necta.models.ExamType
+import com.mtabo.necta.models.NectaExam
 import com.mtabo.necta.models.PerformanceRow
 import com.mtabo.necta.models.SchoolPerformance
 import com.mtabo.necta.utils.TableUtils.getLegacyFtnaPerformanceTable
@@ -13,23 +13,23 @@ import org.jsoup.nodes.Element
 object PerformanceParser {
     fun parsePerformance(
         doc: Document,
-        examType: ExamType,
+        nectaExam: NectaExam,
         year: Int,
     ): SchoolPerformance {
 
         // Helper to get the relevant table for an exam type
         fun getTable(): List<Element>? {
-            return when (examType) {
-                ExamType.ACSEE -> if (year <= 2019) null else getPerformanceTable(doc)
-                ExamType.CSEE -> if (year <= 2018) null else getPerformanceTable(doc)
-                ExamType.FTNA -> when {
+            return when (nectaExam) {
+                NectaExam.ACSEE -> if (year <= 2019) null else getPerformanceTable(doc)
+                NectaExam.CSEE -> if (year <= 2018) null else getPerformanceTable(doc)
+                NectaExam.FTNA -> when {
                     year < 2016 -> null
                     year >= 2022 -> getPerformanceTable(doc)
                     else -> getLegacyFtnaPerformanceTable(doc)
                 }
 
-                ExamType.PSLE -> if (year < 2019) null else getPerformanceTable(doc)
-                ExamType.SFNA -> if (year < 2019) null else getSfnaPeformanceTable(doc)
+                NectaExam.PSLE -> if (year < 2019) null else getPerformanceTable(doc)
+                NectaExam.SFNA -> if (year < 2019) null else getSfnaPeformanceTable(doc)
             }
         }
 
@@ -42,7 +42,7 @@ object PerformanceParser {
         return if (rawPerformanceRows.isEmpty()) {
             SchoolPerformance(emptyList())
         } else {
-            val header = setGradeLabels(examType, year)
+            val header = setGradeLabels(nectaExam, year)
             SchoolPerformance(performanceRows = listOf(header) + rawPerformanceRows)
         }
     }
@@ -90,17 +90,17 @@ object PerformanceParser {
         return SchoolPerformance(listOf(data))
     }
 
-    private fun setGradeLabels(examType: ExamType, year: Int): PerformanceRow {
-        val headers = when (examType) {
-            ExamType.ACSEE, ExamType.CSEE, ExamType.FTNA -> {
-                if ((examType == ExamType.CSEE && year == 2014) || (examType == ExamType.ACSEE && year == 2015)) {
+    private fun setGradeLabels(nectaExam: NectaExam, year: Int): PerformanceRow {
+        val headers = when (nectaExam) {
+            NectaExam.ACSEE, NectaExam.CSEE, NectaExam.FTNA -> {
+                if ((nectaExam == NectaExam.CSEE && year == 2014) || (nectaExam == NectaExam.ACSEE && year == 2015)) {
                     listOf("GPA", "DIST", "MERIT", "CREDIT", "PASS", "FAIL")
                 } else {
                     listOf("DIV", "I", "II", "III", "IV", "0")
                 }
             }
 
-            ExamType.SFNA, ExamType.PSLE -> listOf("GREDI", "A", "B", "C", "D", "F")
+            NectaExam.SFNA, NectaExam.PSLE -> listOf("GREDI", "A", "B", "C", "D", "F")
         }
 
         return PerformanceRow(headers)

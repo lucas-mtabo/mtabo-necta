@@ -20,7 +20,7 @@ object FtnaParser {
     fun parseResults(
         doc: Document,
         year: Int
-    ): Flow<StudentResult.FtnaResult> = flow {
+    ): Flow<StudentResult.FtnaStudentResult> = flow {
         if (year in 2014..2021) {
             val headers = getLegacyTableHeaders(doc)
             val rows = fetchLegacyFtnaResultTable(doc)
@@ -31,8 +31,8 @@ object FtnaParser {
         }
     }
 
-    fun parseModernResults(rows: List<Element>): List<StudentResult.FtnaResult> {
-        val candidates = mutableListOf<StudentResult.FtnaResult>()
+    fun parseModernResults(rows: List<Element>): List<StudentResult.FtnaStudentResult> {
+        val candidates = mutableListOf<StudentResult.FtnaStudentResult>()
         for (tr in rows) {
             val tds = tr.select("td")
             if (tds.isEmpty()) continue
@@ -49,7 +49,7 @@ object FtnaParser {
                 val subjectList = SubjectUtils.splitSubjectString(subjectsRaw)
 
                 candidates.add(
-                    StudentResult.FtnaResult(
+                    StudentResult.FtnaStudentResult(
                         premNo = premNo,
                         indexNo = cno,
                         name = name,
@@ -70,7 +70,7 @@ object FtnaParser {
                 val subjectList = SubjectUtils.splitSubjectString(subjectsRaw)
 
                 candidates.add(
-                    StudentResult.FtnaResult(
+                    StudentResult.FtnaStudentResult(
                         premNo = premNo,
                         indexNo = cno,
                         name = null,
@@ -86,8 +86,8 @@ object FtnaParser {
         return candidates
     }
 
-    fun parseLegacyResults(rows: List<Element>, headers: List<String>): List<StudentResult.FtnaResult> {
-        val candidates = mutableListOf<StudentResult.FtnaResult>()
+    fun parseLegacyResults(rows: List<Element>, headers: List<String>): List<StudentResult.FtnaStudentResult> {
+        val candidates = mutableListOf<StudentResult.FtnaStudentResult>()
 
         var startParsing = false
 
@@ -130,7 +130,7 @@ object FtnaParser {
             val grades = combineSubjectAndScore(headers, normalized)
 
             candidates.add(
-                StudentResult.FtnaResult(
+                StudentResult.FtnaStudentResult(
                     premNo = null,
                     indexNo = cno,
                     name = name,

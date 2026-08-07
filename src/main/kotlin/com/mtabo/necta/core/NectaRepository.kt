@@ -2,10 +2,9 @@ package com.mtabo.necta.core
 
 import com.mtabo.necta.utils.TableUtils
 import com.mtabo.necta.models.District
-import com.mtabo.necta.models.ExamType
+import com.mtabo.necta.models.NectaExam
 import com.mtabo.necta.models.Region
 import com.mtabo.necta.models.School
-import com.mtabo.necta.models.SchoolPerformance
 import com.mtabo.necta.models.StudentResult
 import com.mtabo.necta.parser.CseeAcseeParser
 import com.mtabo.necta.parser.FtnaParser
@@ -17,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 import com.mtabo.necta.parser.SfnaParser
 import com.mtabo.necta.parser.parseDistricts
 import com.mtabo.necta.parser.parseRegions
+import com.mtabo.necta.url.UrlProvider
+import org.example.com.mtabo.necta.models.SchoolPerformance
 import org.jsoup.nodes.Document
 
 class NectaRepository  (
@@ -26,37 +27,37 @@ class NectaRepository  (
 
     // --- Regions ---
     suspend fun fetchRegions(
-        exams: ExamType,
+        exam: NectaExam,
         year: Int
     ): FetchResult<List<Region>> {
 
-        val url = urlProvider.getRegionListUrl(exams, year)
+        val url = urlProvider.getRegionListUrl(exam, year)
 
-        return fetchAndParseWithRetry(url, ::parseRegions)
+        return fetchAndParse(url, ::parseRegions)
     }
 
     // --- Districts ---
     suspend fun fetchDistricts(
-        exams: ExamType,
+        exam: NectaExam,
         year: Int,
         regionCode: String
     ): FetchResult<List<District>> {
 
-        val url = urlProvider.getDistrictListUrl(exams, year, regionCode)
+        val url = urlProvider.getDistrictListUrl(exam, year, regionCode)
 
-        return fetchAndParseWithRetry(url, ::parseDistricts)
+        return fetchAndParse(url, ::parseDistricts)
     }
 
     // --- Schools ---
     suspend fun fetchSchools(
-        exams: ExamType,
+        exam: NectaExam,
         year: Int,
         districtCode: String?
     ): FetchResult<List<School>> {
 
         val url = districtCode?.let {
-            urlProvider.getSchoolListUrl(exams, year, it)
-        } ?: urlProvider.getSchoolListUrl(exams, year)
+            urlProvider.getSchoolListUrl(exam, year, it)
+        } ?: urlProvider.getSchoolListUrl(exam, year)
 
         var lastError: FetchResult.Error? = null
         val retries = 2
@@ -66,7 +67,7 @@ class NectaRepository  (
             when (val result = jsoupClient.fetchDocument(url)) {
 
                 is FetchResult.Success -> {
-                    val schools = parseSchools(result.data, exams)
+                    val schools = parseSchools(result.data, exam)
                     return FetchResult.Success(schools)
                 }
 
@@ -90,12 +91,12 @@ class NectaRepository  (
 
     // --- School Results (Flow streaming) ---
     suspend fun fetchSchoolResult(
-        examType: ExamType,
+        exam: NectaExam,
         year: Int,
         schoolCode: String
     ): FetchResult<SchoolResultsStream> {
 
-        val url = urlProvider.getSchoolResultsUrl(examType, year, schoolCode)
+        val url = urlProvider.getSchoolResultsUrl(exam, year, schoolCode)
 
         return when (val result = jsoupClient.fetchDocument(url)) {
 
@@ -103,24 +104,24 @@ class NectaRepository  (
                 val doc = result.data
 
                 val performance = PerformanceParser
-                    .parsePerformance(doc, examType, year)
+                    .parsePerformance(doc, exam, year)
 
-                val students: Flow<StudentResult> = when (examType) {
+                val students: Flow<StudentResult> = when (exam) {
 
-                    ExamType.ACSEE, ExamType.CSEE ->
+                    NectaExam.ACSEE, NectaExam.CSEE ->
                         CseeAcseeParser.parseResults(
                             TableUtils.fetchCseeResultTable(doc)
                         )
 
-                    ExamType.FTNA ->
+                    NectaExam.FTNA ->
                         FtnaParser.parseResults(doc, year)
 
-                    ExamType.PSLE ->
+                    NectaExam.PSLE ->
                         PsleParser.parseResults(
                             TableUtils.fetchPsleResultTable(doc), year
                         )
 
-                    ExamType.SFNA ->
+                    NectaExam.SFNA ->
                         SfnaParser.parseResultsFlow(doc, year)
                 }
 
@@ -136,44 +137,16 @@ class NectaRepository  (
         }
     }
 
-    // --- Helper for consistent error creation ---
-    private fun error(message: String): FetchResult.Error.Unknown {
-        return FetchResult.Error.Unknown(IllegalArgumentException(message))
-    }
 
-    // --- Generic helper with retry (FIXED) ---
-    private suspend fun <T> fetchAndParseWithRetry(
+
+    private suspend fun <T> fetchAndParse(
         url: String,
-        parser: suspend (Document) -> T,
-        retries: Int = 2
-    ): FetchResult<T> {
-
-        var lastError: FetchResult.Error? = null
-
-        repeat(retries + 1) { attempt ->
-            when (val result = jsoupClient.fetchDocument(url)) {
-
-                is FetchResult.Success -> {
-                    return FetchResult.Success(parser(result.data))
-                }
-
-                is FetchResult.Error.Timeout,
-                is FetchResult.Error.Network -> {
-                    lastError = result
-                    if (attempt < retries) delay(500L * (attempt + 1))
-                }
-
-                is FetchResult.Error.Http,
-                is FetchResult.Error.Unknown -> {
-                    return result
-                }
-            }
+        parser: suspend (Document) -> T
+    ): FetchResult<T> =
+        when (val result = jsoupClient.fetchDocument(url)) {
+            is FetchResult.Success -> FetchResult.Success(parser(result.data))
+            is FetchResult.Error -> result
         }
-
-        return lastError ?: FetchResult.Error.Unknown(
-            RuntimeException("Failed after retries: $url")
-        )
-    }
 
     companion object {
         fun create(): NectaRepository {

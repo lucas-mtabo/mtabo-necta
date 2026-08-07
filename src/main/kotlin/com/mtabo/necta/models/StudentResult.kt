@@ -17,7 +17,7 @@ sealed class StudentResult {
 
     @Serializable
     @SerialName("ftna")
-    data class FtnaResult(
+    data class FtnaStudentResult(
         val premNo: String?,
         val points: String,
         val division: String,

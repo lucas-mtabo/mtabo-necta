@@ -1,14 +1,15 @@
-package org.example.com.mtabo.necta.api
+package com.mtabo.necta
 
-import com.mtabo.necta.core.FetchResult
 import com.mtabo.necta.core.NectaRepository
 import com.mtabo.necta.core.SchoolResultsStream
 import com.mtabo.necta.models.District
-import com.mtabo.necta.models.ExamType
+import com.mtabo.necta.models.NectaExam
 import com.mtabo.necta.models.Region
 import com.mtabo.necta.models.School
+import com.mtabo.necta.core.FetchResult
+import com.mtabo.necta.url.ParsedUrlResolver.getResultsEntryUrl
 
-object NectaSdk {
+object NectaClient {
 
     // Internal engine (hidden from users)
     private val repository = NectaRepository.create()
@@ -18,10 +19,10 @@ object NectaSdk {
     // =========================================================
 
     suspend fun fetchRegions(
-        examType: ExamType,
+        nectaExam: NectaExam,
         year: Int
     ): FetchResult<List<Region>> {
-        return repository.fetchRegions(examType, year)
+        return repository.fetchRegions(nectaExam, year)
     }
 
     // =========================================================
@@ -29,11 +30,11 @@ object NectaSdk {
     // =========================================================
 
     suspend fun fetchDistricts(
-        examType: ExamType,
+        nectaExam: NectaExam,
         year: Int,
         regionCode: String
     ): FetchResult<List<District>> {
-        return repository.fetchDistricts(examType, year, regionCode)
+        return repository.fetchDistricts(nectaExam, year, regionCode)
     }
 
     // =========================================================
@@ -41,11 +42,11 @@ object NectaSdk {
     // =========================================================
 
     suspend fun fetchSchools(
-        examType: ExamType,
+        nectaExam: NectaExam,
         year: Int,
         districtCode: String? = null
     ): FetchResult<List<School>> {
-        return repository.fetchSchools(examType, year, districtCode)
+        return repository.fetchSchools(nectaExam, year, districtCode)
     }
 
     // =========================================================
@@ -53,10 +54,26 @@ object NectaSdk {
     // =========================================================
 
     suspend fun fetchSchoolResults(
-        examType: ExamType,
+        nectaExam: NectaExam,
         year: Int,
         schoolCode: String
     ): FetchResult<SchoolResultsStream> {
-        return repository.fetchSchoolResult(examType, year, schoolCode)
+        return repository.fetchSchoolResult(nectaExam, year, schoolCode)
+    }
+
+
+    /**
+     * Checks whether exam results for a given exam type and year is available.
+     *
+     * Note: This method does not distinguish between different failure causes.
+     * Any error is treated as "results not released".
+     */
+    suspend fun isResultAvailable(exam: NectaExam, year: Int): Boolean {
+        return try {
+            getResultsEntryUrl(exam, year)
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }

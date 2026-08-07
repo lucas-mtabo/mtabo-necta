@@ -8,18 +8,4 @@ data class School(
     val name: String
 )
 
-@Serializable
-data class PerformanceRow(
-    val values: List<String>
-)
 
-@Serializable
-data class SchoolPerformance(
-    val performanceRows: List<PerformanceRow>
-)
-
-@Serializable
-data class SchoolResult(
-    val performance: SchoolPerformance,
-    val students: List<StudentResult>
-)
