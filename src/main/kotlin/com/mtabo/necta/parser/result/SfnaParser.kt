@@ -1,4 +1,4 @@
-package com.mtabo.necta.parser
+package com.mtabo.necta.parser.result
 
 
 import com.mtabo.necta.models.StudentResult
@@ -10,63 +10,65 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 object SfnaParser {
-    fun parseResultsFlow(
+    fun parseResults(
         doc: Document,
         year: Int
-    ): Flow<StudentResult.PrimaryStudentResult> = flow {
+    ): List<StudentResult.PsleAndSfnaResult> {
         val rows = fetchPsleResultTable(doc)
-        if (year in 2015..2021) {
-            for (row in parseLegacySfna(rows)) emit(row)
+
+        return if (year in 2015..2021) {
+            parseLegacySfna(rows)
         } else {
-            for (row in parseModernSfna(rows)) emit(row)
+            parseModernSfna(rows)
         }
     }
-    fun parseModernSfna(rows:  List<Element>): List<StudentResult.PrimaryStudentResult> {
-        val candidates = mutableListOf<StudentResult.PrimaryStudentResult>()
+
+    fun parseModernSfna(rows:  List<Element>): List<StudentResult.PsleAndSfnaResult> {
+        val candidates = mutableListOf<StudentResult.PsleAndSfnaResult>()
         for (tr in rows) {
             val tds = tr.select("td")
             if (tds.size >= 5) {
                 val (grade, subjects) = SubjectUtils.splitGradeFromSubjects(tds[4])
                 candidates.add(
-                    StudentResult.PrimaryStudentResult(
+                    StudentResult.PsleAndSfnaResult(
                         indexNo = tds[0].text().trim(),
                         premNo = tds[1].text().trim(),
                         sex = tds[2].text().trim(),
                         name = tds[3].text().trim(),
                         grade = grade,
-                        subjects = subjects
+                        subjectDetails = subjects
                     )
                 )
             } else if (tds.size >= 4) {
                 // does not have candidate name column
                 val (grade, subjects) = SubjectUtils.splitGradeFromSubjects(tds[3])
                 candidates.add(
-                    StudentResult.PrimaryStudentResult(
+                    StudentResult.PsleAndSfnaResult(
                         indexNo = tds[0].text().trim(),
                         premNo = tds[1].text().trim(),
                         sex = tds[2].text().trim(),
                         name = null,
                         grade = grade,
-                        subjects = subjects
+                        subjectDetails = subjects
                     )
                 )
             }
         }
         return candidates
     }
-    fun parseLegacySfna(rows:  List<Element>): List<StudentResult.PrimaryStudentResult> {
-        val candidates = mutableListOf<StudentResult.PrimaryStudentResult>()
+    fun parseLegacySfna(rows:  List<Element>): List<StudentResult.PsleAndSfnaResult> {
+        val candidates = mutableListOf<StudentResult.PsleAndSfnaResult>()
         for (tr in rows) {
             val tds = tr.select("td")
             if (tds.size >= 5) {
                 // Has separate average grade column
                 candidates.add(
-                    StudentResult.PrimaryStudentResult(
+                    StudentResult.PsleAndSfnaResult(
                         premNo = null,
                         indexNo = tds[0].text().trim(),
                         sex = tds[1].text().trim(),
                         name = tds[2].text().trim(),
-                        subjects = SubjectUtils.splitSubjectString(tds[3].text()),
+                        subjectDetails = SubjectUtils.splitSubjectString(tds[3].text()),
                         grade = tds[4].text().trim()
                     )
                 )

@@ -1,49 +1,49 @@
 package com.mtabo.necta.parser
 
-import com.mtabo.necta.models.NectaExam
-import com.mtabo.necta.models.PerformanceRow
-import com.mtabo.necta.models.SchoolPerformance
+import com.mtabo.necta.models.Exam
 import com.mtabo.necta.utils.TableUtils.getLegacyFtnaPerformanceTable
 import com.mtabo.necta.utils.TableUtils.getPerformanceTable
 import com.mtabo.necta.utils.TableUtils.getSfnaPeformanceTable
 import necta.utils.pick
+import com.mtabo.necta.models.PerformanceItem
+import com.mtabo.necta.models.SchoolPerformance
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 object PerformanceParser {
     fun parsePerformance(
         doc: Document,
-        nectaExam: NectaExam,
+        exam: Exam,
         year: Int,
     ): SchoolPerformance {
 
         // Helper to get the relevant table for an exam type
         fun getTable(): List<Element>? {
-            return when (nectaExam) {
-                NectaExam.ACSEE -> if (year <= 2019) null else getPerformanceTable(doc)
-                NectaExam.CSEE -> if (year <= 2018) null else getPerformanceTable(doc)
-                NectaExam.FTNA -> when {
+            return when (exam) {
+                Exam.ACSEE -> if (year <= 2019) null else getPerformanceTable(doc)
+                Exam.CSEE -> if (year <= 2018) null else getPerformanceTable(doc)
+                Exam.FTNA -> when {
                     year < 2016 -> null
                     year >= 2022 -> getPerformanceTable(doc)
                     else -> getLegacyFtnaPerformanceTable(doc)
                 }
 
-                NectaExam.PSLE -> if (year < 2019) null else getPerformanceTable(doc)
-                NectaExam.SFNA -> if (year < 2019) null else getSfnaPeformanceTable(doc)
+                Exam.PSLE -> if (year < 2019) null else getPerformanceTable(doc)
+                Exam.SFNA -> if (year < 2019) null else getSfnaPeformanceTable(doc)
             }
         }
 
         // --- Parse the table or legacy rows ---
-        val rawPerformanceRows: List<PerformanceRow> = getTable()?.let { rows ->
-            parseModernSchoolPerformance(rows).performanceRows
+        val rawPerformanceItems: List<PerformanceItem> = getTable()?.let { rows ->
+            parseModernSchoolPerformance(rows).performanceItems
         } ?: emptyList()
 
         // --- Prepend header if there is data ---
-        return if (rawPerformanceRows.isEmpty()) {
+        return if (rawPerformanceItems.isEmpty()) {
             SchoolPerformance(emptyList())
         } else {
-            val header = setGradeLabels(nectaExam, year)
-            SchoolPerformance(performanceRows = listOf(header) + rawPerformanceRows)
+            val header = setGradeLabels(exam, year)
+            SchoolPerformance(performanceItems = listOf(header) + rawPerformanceItems)
         }
     }
 
@@ -76,7 +76,7 @@ object PerformanceParser {
             match.groupValues[1] to match.groupValues[2]
         }
 
-        val data = PerformanceRow(
+        val data = PerformanceItem(
             values = listOf(
                 "T",
                 divisions.pick("DIV-I", "DISTINCTION"),
@@ -90,20 +90,20 @@ object PerformanceParser {
         return SchoolPerformance(listOf(data))
     }
 
-    private fun setGradeLabels(nectaExam: NectaExam, year: Int): PerformanceRow {
-        val headers = when (nectaExam) {
-            NectaExam.ACSEE, NectaExam.CSEE, NectaExam.FTNA -> {
-                if ((nectaExam == NectaExam.CSEE && year == 2014) || (nectaExam == NectaExam.ACSEE && year == 2015)) {
+    private fun setGradeLabels(exam: Exam, year: Int): PerformanceItem {
+        val headers = when (exam) {
+            Exam.ACSEE, Exam.CSEE, Exam.FTNA -> {
+                if ((exam == Exam.CSEE && year == 2014) || (exam == Exam.ACSEE && year == 2015)) {
                     listOf("GPA", "DIST", "MERIT", "CREDIT", "PASS", "FAIL")
                 } else {
                     listOf("DIV", "I", "II", "III", "IV", "0")
                 }
             }
 
-            NectaExam.SFNA, NectaExam.PSLE -> listOf("GREDI", "A", "B", "C", "D", "F")
+            Exam.SFNA, Exam.PSLE -> listOf("GREDI", "A", "B", "C", "D", "F")
         }
 
-        return PerformanceRow(headers)
+        return PerformanceItem(headers)
     }
 
     /**
@@ -114,7 +114,7 @@ object PerformanceParser {
      *  - Total → "JUMLA"
      * Other columns remain unchanged.
      */
-    private fun List<Element>.toPerformanceRow(): PerformanceRow {
+    private fun List<Element>.toPerformanceRow(): PerformanceItem {
         // Helper function to normalize the first cell
         fun normalizeGenderLabel(label: String): String {
             val lower = label.lowercase()
@@ -126,7 +126,7 @@ object PerformanceParser {
             }
         }
 
-        return PerformanceRow(
+        return PerformanceItem(
             values = this.take(6).mapIndexed { index, td ->
                 val text = td.text().trim()
                 if (index == 0) normalizeGenderLabel(text) else text

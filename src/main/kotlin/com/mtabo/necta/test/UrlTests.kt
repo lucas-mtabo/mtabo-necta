@@ -1,6 +1,6 @@
 package com.mtabo.necta.test
 
-import com.mtabo.necta.models.NectaExam
+import com.mtabo.necta.models.Exam
 import com.mtabo.necta.url.ParsedUrlResolver.extractDistrictListUrl
 import com.mtabo.necta.url.ParsedUrlResolver.getPrimarySchoolUrl
 import com.mtabo.necta.url.ParsedUrlResolver.getPrimarySchoolListUrl
@@ -11,7 +11,8 @@ import kotlinx.coroutines.runBlocking
 
 // Debug / test
 fun main() = runBlocking {
-    testIndividualSecondarySchoolUrl()
+    testResultHomePage()
+    //testIndividualSecondarySchoolUrl()
     //testIndividualPrimarySchool()
     //testDistricts()
     //testPrimarySchoolResults()
@@ -20,8 +21,8 @@ fun main() = runBlocking {
 
 fun testIndividualPrimarySchool() = runBlocking {
     val testCases = listOf(
-        Triple(NectaExam.PSLE, 2013..2025, "0102073"),
-        Triple(NectaExam.SFNA, 2015..2025, "0102073")
+        Triple(Exam.PSLE, 2013..2025, "0102073"),
+        Triple(Exam.SFNA, 2015..2025, "0102073")
     )
 
     println("===== GENERIC SCHOOL RESOLVER TEST =====")
@@ -45,7 +46,7 @@ fun testIndividualPrimarySchool() = runBlocking {
     println("===== DONE =====")
 }
 fun testPrimarySchoolResults() = runBlocking {
-    val exam = NectaExam.SFNA
+    val exam = Exam.SFNA
     val districtId = "0102" // Example: district ID
     val years = 2015..2025
 
@@ -67,8 +68,8 @@ fun testDistricts() = runBlocking {
 
     // Define exam-year ranges
     val testCases = listOf(
-        NectaExam.PSLE to (2013..2025),
-        NectaExam.SFNA to (2015..2025)
+        Exam.PSLE to (2013..2025),
+        Exam.SFNA to (2015..2025)
     )
 
     val regionCode = "01" // Example region code
@@ -96,13 +97,13 @@ fun testDistricts() = runBlocking {
     }
 }
 suspend fun testResultHomePage() {
-    val years = 2014..2025
+    val years = 2014..2026
     val exams = listOf(
-        //ExamType.ACSEE,
-        //ExamType.CSEE,
-        //ExamType.FTNA,
-        NectaExam.PSLE,
-        //ExamType.SFNA
+        Exam.ACSEE,
+        //Exam.CSEE,
+        //Exam.FTNA,
+        Exam.PSLE,
+        //Exam.SFNA
     )
 
     println("===== RESOLVER ENGINE TEST =====")
@@ -122,9 +123,9 @@ suspend fun testResultHomePage() {
 
 fun testIndividualSecondarySchoolUrl() = runBlocking {
     val testCases = listOf(
-        Triple(NectaExam.ACSEE, 2003..2025, "S0136"),
-        Triple(NectaExam.CSEE, 2003..2025, "S0147"),
-        Triple(NectaExam.FTNA, 2014..2025, "S0136"),
+        Triple(Exam.ACSEE, 2003..2026, "S0136"),
+        Triple(Exam.CSEE, 2003..2026, "S0147"),
+        Triple(Exam.FTNA, 2014..2026, "S0136"),
     )
 
     println("===== RANGE TEST =====")

@@ -1,6 +1,6 @@
 package com.mtabo.necta.url
 
-import com.mtabo.necta.models.NectaExam
+import com.mtabo.necta.models.Exam
 
 /**
  * Methods in this class
@@ -9,14 +9,14 @@ import com.mtabo.necta.models.NectaExam
 object StaticUrlResolver {
 
     fun resolveSchoolResultUrl(
-        exams: NectaExam,
+        exams: Exam,
         year: Int,
         schoolCode: String
     ): String {
         val normalizedId = schoolCode.lowercase()
 
         return when (exams) {
-            NectaExam.ACSEE -> when (year) {
+            Exam.ACSEE -> when (year) {
                 in 2005..2007 ->
                     "https://maktaba.tetea.org/exam-results/ACSEE$year/${normalizedId}.html"
                 2008 -> "" // No data for 2008
@@ -27,7 +27,7 @@ object StaticUrlResolver {
                 else -> "https://matokeo.necta.go.tz/results/$year/acsee/results/$normalizedId.htm"
             }
 
-            NectaExam.CSEE -> when (year) {
+            Exam.CSEE -> when (year) {
                 in 2003..2004, 2013 ->
                     "https://maktaba.tetea.org/exam-results/CSEE$year/$normalizedId.html"
                 2005 ->
@@ -45,7 +45,7 @@ object StaticUrlResolver {
                 else -> "https://matokeo.necta.go.tz/results/$year/csee/results/$normalizedId.htm"
             }
 
-            NectaExam.FTNA -> when(year) {
+            Exam.FTNA -> when(year) {
                 2014 ->
                     "https://maktaba.tetea.org/exam-results/FTSEE2014-2/${normalizedId.uppercase()}.htm"  // includes zonal code 03_S0013-0.htm
 
@@ -58,14 +58,14 @@ object StaticUrlResolver {
                 else -> "https://onlinesys.necta.go.tz/results/$year/ftna/results/${normalizedId}.htm"
             }
 
-            NectaExam.PSLE -> when(year) {
+            Exam.PSLE -> when(year) {
                 in 2013..2023 ->
                     "https://maktaba.tetea.org/exam-results/PSLE$year/shl_$normalizedId.htm"
                 else ->
                     "https://onlinesys.necta.go.tz/results/$year/psle/results/shl_$normalizedId.htm"
             }
 
-            NectaExam.SFNA -> when(year) {
+            Exam.SFNA -> when(year) {
                 in 2015..2023 ->
                     "https://maktaba.tetea.org/exam-results/SFNA$year/$normalizedId.htm"
                 else ->
@@ -75,12 +75,12 @@ object StaticUrlResolver {
     }
 
     fun resolveSchoolListUrl(
-        exams: NectaExam,
+        exams: Exam,
         year: Int,
         districtId: String? = null
     ): String {
         return when (exams) {
-            NectaExam.ACSEE -> when {
+            Exam.ACSEE -> when {
                 year < 2005 -> ""
                 year == 2008 -> "" // No data for 2008
                 year in 2005..2009 ->
@@ -95,7 +95,7 @@ object StaticUrlResolver {
                     "https://onlinesys.necta.go.tz/results/$year/acsee/index.htm"
             }
 
-            NectaExam.CSEE -> when {
+            Exam.CSEE -> when {
                 year < 2003 -> ""
                 year in 2003..2004 ->
                     "https://maktaba.tetea.org/exam-results/CSEE$year/olevel.html"
@@ -121,7 +121,7 @@ object StaticUrlResolver {
                     "https://onlinesys.necta.go.tz/results/$year/csee/index.htm"
             }
 
-            NectaExam.FTNA -> when {
+            Exam.FTNA -> when {
                 year < 2014 -> ""
                 year == 2014 ->
                     "https://maktaba.tetea.org/exam-results/FTSEE2014-2/formtwo-2014-2.htm"
@@ -135,7 +135,7 @@ object StaticUrlResolver {
                     "https://onlinesys.necta.go.tz/results/$year/ftna/ftna.htm"
             }
 
-            NectaExam.PSLE -> when {
+            Exam.PSLE -> when {
                 year < 2013 -> ""
                 year in 2013..2023 ->
                     if (districtId != null)
@@ -147,7 +147,7 @@ object StaticUrlResolver {
                     else ""
             }
 
-            NectaExam.SFNA -> when {
+            Exam.SFNA -> when {
                 year < 2015 -> ""
                 year in 2015..2023 ->
                     if (districtId != null)
@@ -162,12 +162,12 @@ object StaticUrlResolver {
     }
 
     fun resolveRegionListUrl(
-        exams: NectaExam,
+        exams: Exam,
         year: Int
     ): String {
         return when (exams) {
 
-            NectaExam.SFNA -> when {
+            Exam.SFNA -> when {
                 year < 2015 -> ""
                 year in 2015..2016 ->
                     "https://maktaba.tetea.org/exam-results/SFNA2015/index.htm"
@@ -178,7 +178,7 @@ object StaticUrlResolver {
                 else -> ""
             }
 
-            NectaExam.PSLE -> when {
+            Exam.PSLE -> when {
                 year < 2013 -> ""
                 year == 2013 ->
                     "https://maktaba.tetea.org/exam-results/PSLE2013/psle.htm"
@@ -196,13 +196,13 @@ object StaticUrlResolver {
     }
 
     fun resolveDistrictListUrl(
-        exams: NectaExam,
+        exams: Exam,
         year: Int,
         regionCode: String
     ): String {
         return when (exams) {
 
-            NectaExam.PSLE -> when {
+            Exam.PSLE -> when {
                 year < 2013 -> ""
                 year in 2013..2023 ->
                     "https://maktaba.tetea.org/exam-results/PSLE$year/reg_${regionCode}.htm"
@@ -211,7 +211,7 @@ object StaticUrlResolver {
                 else -> ""
             }
 
-            NectaExam.SFNA -> when {
+            Exam.SFNA -> when {
                 year < 2015 -> ""
                 year in 2015..2023 ->
                     "https://maktaba.tetea.org/exam-results/SFNA$year/reg_ps${regionCode}.htm"

@@ -1,7 +1,7 @@
 package com.mtabo.necta.url
 
-import com.mtabo.necta.core.JsoupClient
-import com.mtabo.necta.models.NectaExam
+import com.mtabo.necta.client.JsoupClient
+import com.mtabo.necta.models.Exam
 
 
 /**
@@ -13,7 +13,7 @@ import com.mtabo.necta.models.NectaExam
 object UrlProvider {
 
     suspend fun getSchoolResultsUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         schoolCode: String
     ): String? {
@@ -35,7 +35,7 @@ object UrlProvider {
     }
 
     suspend fun getSchoolListUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         districtId: String? = null
     ): String? {
@@ -57,7 +57,7 @@ object UrlProvider {
     }
 
     suspend fun getDistrictListUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         regionCode: String
     ): String? {
@@ -79,7 +79,7 @@ object UrlProvider {
     }
 
     suspend fun getRegionListUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int
     ): String? {
         val staticUrl = StaticUrlResolver.resolveRegionListUrl(

@@ -1,10 +1,10 @@
-package necta.utils
+package com.mtabo.necta.utils
 
 
-import com.mtabo.necta.core.JsoupClient
+import com.mtabo.necta.client.JsoupClient
 import com.mtabo.necta.url.StaticUrlResolver
 import com.mtabo.necta.models.District
-import com.mtabo.necta.models.NectaExam
+import com.mtabo.necta.models.Exam
 import com.mtabo.necta.models.Region
 import com.mtabo.necta.parser.parseDistricts
 import com.mtabo.necta.parser.parseRegions
@@ -12,7 +12,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import com.mtabo.necta.core.FetchResult
+import com.mtabo.necta.client.FetchResult
 import java.io.File
 
 @Serializable
@@ -85,7 +85,7 @@ suspend fun collectRegionsAndDistrictsWithHistory(
 }
 
 suspend fun fetchRegionsForYear(year: Int): List<Region>? {
-    val url = StaticUrlResolver.buildRegionListUrl(NectaExam.PSLE, year) ?: return null
+    val url = StaticUrlResolver.resolveRegionListUrl(Exam.PSLE, year) ?: return null
 
     return when (val result = JsoupClient.fetchDocument(url)) {
         is FetchResult.Success -> parseRegions(result.data)
@@ -97,7 +97,7 @@ suspend fun fetchRegionsForYear(year: Int): List<Region>? {
 }
 
 suspend fun fetchDistrictsForYear(year: Int, regionCode: String): List<District>? {
-    val url = StaticUrlResolver.buildDistrictListUrl(NectaExam.PSLE, year, regionCode) ?: return null
+    val url = StaticUrlResolver.resolveDistrictListUrl(Exam.PSLE, year, regionCode) ?: return null
 
     return when (val result = JsoupClient.fetchDocument(url)) {
         is FetchResult.Success -> parseDistricts(result.data)

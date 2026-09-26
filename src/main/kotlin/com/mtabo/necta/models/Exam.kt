@@ -6,7 +6,7 @@ package com.mtabo.necta.models
  * @property code Official examination code used by NECTA.
  * @property availableFrom The earliest year for which examination results are available.
  */
-enum class NectaExam(
+enum class Exam(
     val code: String,
     val availableFrom: Int
 ) {

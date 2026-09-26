@@ -1,42 +1,43 @@
 package com.mtabo.necta.url
 
-import com.mtabo.necta.core.JsoupClient.fetchDocument
-import com.mtabo.necta.models.NectaExam
-import com.mtabo.necta.core.FetchResult
+import com.mtabo.necta.client.FetchResult
+import com.mtabo.necta.client.JsoupClient.fetchDocument
+import com.mtabo.necta.models.Exam
+import com.mtabo.necta.url.ParsedUrlResolver.extractDistrictListUrl
 import java.net.URL
 
 object ParsedUrlResolver {
 
     suspend fun extractSchoolResultUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         schoolCode: String
     ): String? {
         return when(exam) {
-            NectaExam.ACSEE, NectaExam.CSEE, NectaExam.FTNA ->
+            Exam.ACSEE, Exam.CSEE, Exam.FTNA ->
                 getSecondarySchoolUrl(exam, year, schoolCode)
 
-            NectaExam.PSLE, NectaExam.SFNA ->
+            Exam.PSLE, Exam.SFNA ->
                 getPrimarySchoolUrl(exam, year, schoolCode)
         }
     }
 
     suspend fun extractSchoolListUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         districtId: String? = null
     ): String? {
         return when(exam) {
-            NectaExam.ACSEE, NectaExam.CSEE, NectaExam.FTNA ->
+            Exam.ACSEE, Exam.CSEE, Exam.FTNA ->
                 getResultsEntryUrl(exam, year)
 
-            NectaExam.PSLE, NectaExam.SFNA ->
+            Exam.PSLE, Exam.SFNA ->
                 getPrimarySchoolListUrl(exam, year, districtId ?: "")
         }
     }
 
     suspend fun extractDistrictListUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         regionCode: String
     ): String? {
@@ -49,7 +50,7 @@ object ParsedUrlResolver {
 
                 // 🔹 Pattern differs for SFNA vs PSLE
                 val regionPattern = when (exam) {
-                    NectaExam.SFNA -> Regex("""(results/)?reg_ps${regionCode}\.htm""", RegexOption.IGNORE_CASE)
+                    Exam.SFNA -> Regex("""(results/)?reg_ps${regionCode}\.htm""", RegexOption.IGNORE_CASE)
                     else -> Regex("""(results/)?reg_${regionCode}\.htm""", RegexOption.IGNORE_CASE)
                 }
 
@@ -72,7 +73,7 @@ object ParsedUrlResolver {
      * for primary schools it returns url for list of regions
      * for secondary schools it returns url for list of schools
      */
-    suspend fun getResultsEntryUrl(exam: NectaExam, year: Int): String? {
+    suspend fun getResultsEntryUrl(exam: Exam, year: Int): String? {
         fetchFromNecta(exam, year)?.let { return it }
 
         fetchFromMaktaba(exam, year)?.let { return it }
@@ -83,7 +84,7 @@ object ParsedUrlResolver {
 
 
     suspend fun getSecondarySchoolUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         schoolCode: String
     ): String? {
@@ -95,7 +96,7 @@ object ParsedUrlResolver {
                 val doc = fetchResult.data
 
                 // 🔹 Old broken CSEE pages
-                if (exam == NectaExam.CSEE && year in 2003..2009) {
+                if (exam == Exam.CSEE && year in 2003..2009) {
                     val regex = Regex(
                         """href\s*=\s*['"]([^'"]*${Regex.escape(schoolCode)}[^'"]*)['"]""",
                         RegexOption.IGNORE_CASE
@@ -138,7 +139,7 @@ object ParsedUrlResolver {
      * @throws IllegalArgumentException if the exam type is not PSLE or SFNA.
      */
     suspend fun getPrimarySchoolUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         schoolCode: String
     ): String? {
@@ -155,7 +156,7 @@ object ParsedUrlResolver {
                 val doc = schoolsInDistrict.data
 
                 // Step 4: Extract school-specific link
-                val schoolLink = if (exam == NectaExam.PSLE && year in 2013..2015) {
+                val schoolLink = if (exam == Exam.PSLE && year in 2013..2015) {
                     // 🔹 Handle old malformed PSLE pages
                     val regex = Regex(
                         """href\s*=\s*['"]([^'"]*${Regex.escape(schoolCode)}[^'"]*)['"]""",
@@ -202,7 +203,7 @@ object ParsedUrlResolver {
      * @return The district result URL, or an empty string if not found or on error.
      */
     suspend fun getPrimarySchoolListUrl(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         districtCode: String
     ): String? {
@@ -213,7 +214,7 @@ object ParsedUrlResolver {
         return when (val fetchResult = fetchDocument(districtUrl)) {
             is FetchResult.Success -> {
                 val doc = fetchResult.data
-                val links: List<String> = if (exam == NectaExam.PSLE && year in 2013..2015) {
+                val links: List<String> = if (exam == Exam.PSLE && year in 2013..2015) {
                     // 🔹 Old broken PSLE pages may have malformed HTML
                     val regex = Regex(
                         """href\s*=\s*['"]([^'"]*${Regex.escape(districtCode)}[^'"]*)['"]""",
@@ -225,7 +226,7 @@ object ParsedUrlResolver {
                 } else {
                     // 🔹 Modern pages
                     val districtPattern = when (exam) {
-                        NectaExam.SFNA -> Regex("""distr_ps$districtCode.*\.htm""", RegexOption.IGNORE_CASE)
+                        Exam.SFNA -> Regex("""distr_ps$districtCode.*\.htm""", RegexOption.IGNORE_CASE)
                         else -> Regex("""distr_$districtCode.*\.htm""", RegexOption.IGNORE_CASE)
                     }
 
@@ -247,7 +248,7 @@ object ParsedUrlResolver {
     }
 
 
-    private suspend fun fetchFromNecta(exam: NectaExam, year: Int): String? {
+    private suspend fun fetchFromNecta(exam: Exam, year: Int): String? {
         val url = "https://www.necta.go.tz/results/view/${exam.code.lowercase()}"
         val doc = fetchDocumentOrThrow(url, "NECTA")
 
@@ -257,14 +258,14 @@ object ParsedUrlResolver {
         }?.attr("href")
     }
 
-    private suspend fun fetchFromMaktaba(exam: NectaExam, year: Int): String? {
+    private suspend fun fetchFromMaktaba(exam: Exam, year: Int): String? {
         val url = "https://maktaba.tetea.org/results/"
         val doc = fetchDocumentOrThrow(url, "Maktaba")
 
         return doc.select("a[href]").firstOrNull {
             val href = it.attr("href").uppercase()
             when {
-                exam == NectaExam.FTNA && year == 2014 -> href.contains("FTSEE2014-2")
+                exam == Exam.FTNA && year == 2014 -> href.contains("FTSEE2014-2")
                 else -> href.contains(exam.code, ignoreCase = true) && href.contains(year.toString())
             }
         }?.attr("href")

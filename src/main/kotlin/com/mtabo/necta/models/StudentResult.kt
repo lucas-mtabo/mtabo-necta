@@ -13,7 +13,7 @@ sealed class StudentResult {
     abstract val indexNo: String
     abstract val name: String?
     abstract val sex: String
-    abstract val subjects: List<Subject>
+    abstract val subjectDetails: List<SubjectDetail>
 
     @Serializable
     @SerialName("ftna")
@@ -24,29 +24,29 @@ sealed class StudentResult {
         override val indexNo: String,
         override val name: String?,
         override val sex: String,
-        override val subjects: List<Subject>
+        override val subjectDetails: List<SubjectDetail>
     ) : StudentResult()
 
     @Serializable
     @SerialName("secondary")
-    data class SecondaryStudentResult(
+    data class CseeOrAcseeResult(
         val points: String,
         val division: String,
         override val indexNo: String,
         override val name: String?,
         override val sex: String,
-        override val subjects: List<Subject>
+        override val subjectDetails: List<SubjectDetail>
     ) : StudentResult()
 
     @Serializable
     @SerialName("primary")
-    data class PrimaryStudentResult(
+    data class PsleAndSfnaResult(
         val premNo: String?,
         val grade: String,
         override val indexNo: String,
         override val name: String?,
         override val sex: String,
-        override val subjects: List<Subject>
+        override val subjectDetails: List<SubjectDetail>
     ) : StudentResult()
 }
 

@@ -1,4 +1,4 @@
-package com.mtabo.necta.core
+package com.mtabo.necta.client
 
 import java.io.IOException
 import java.net.SocketTimeoutException

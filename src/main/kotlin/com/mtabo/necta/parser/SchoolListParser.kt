@@ -1,15 +1,15 @@
 package com.mtabo.necta.parser
 
-import com.mtabo.necta.models.NectaExam
+import com.mtabo.necta.models.Exam
 import com.mtabo.necta.models.School
 import org.jsoup.nodes.Document
 
 
-fun parseSchools(doc: Document, nectaExam: NectaExam): List<School> =
-    when (nectaExam) {
-        NectaExam.ACSEE, NectaExam.CSEE -> parseSecondarySchools(doc)
-        NectaExam.FTNA -> parseFtnaSchools(doc)
-        NectaExam.PSLE, NectaExam.SFNA -> parsePrimarySchool(doc)
+fun parseSchools(doc: Document, exam: Exam): List<School> =
+    when (exam) {
+        Exam.ACSEE, Exam.CSEE -> parseSecondarySchools(doc)
+        Exam.FTNA -> parseFtnaSchools(doc)
+        Exam.PSLE, Exam.SFNA -> parsePrimarySchool(doc)
     }
 
 

@@ -1,43 +1,52 @@
-package com.mtabo.necta.parser
+package com.mtabo.necta.parser.result
 
 
 import com.mtabo.necta.models.StudentResult
 import necta.utils.SubjectUtils
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
+
 
 object CseeAcseeParser {
-    fun parseResults(rows: List<Element>): Flow<StudentResult.SecondaryStudentResult> = flow {
+
+    fun parseResults(rows: List<Element>): List<StudentResult.CseeOrAcseeResult> {
+
+        val results = mutableListOf<StudentResult.CseeOrAcseeResult>()
+
         for (tr in rows) {
             val tds = tr.select("td")
             when {
                 tds.size >= 6 -> { // Has Candidate Name column
-                    emit(
-                        StudentResult.SecondaryStudentResult(
-                            indexNo = tds[0].text().trim(),
-                            sex = tds[1].text().trim(),
-                            name = tds[2].text().trim(),
-                            points = tds[3].text().trim(),
-                            division = tds[4].text().trim(),
-                            subjects = SubjectUtils.splitSubjectString(tds[5].text())
+                    results.add(
+                        StudentResult.CseeOrAcseeResult(
+                            indexNo = tds.textAt( 0),
+                            sex = tds.textAt( 1),
+                            name = tds.textAt( 2),
+                            points = tds.textAt( 3),
+                            division = tds.textAt( 4),
+                            subjectDetails = SubjectUtils.splitSubjectString(tds[5].text())
                         )
                     )
                 }
 
                 tds.size >= 5 -> { // Normal structure (no name column)
-                    emit(
-                        StudentResult.SecondaryStudentResult(
-                            indexNo = tds[0].text().trim(),
-                            sex = tds[1].text().trim(),
+                    results.add(
+                        StudentResult.CseeOrAcseeResult(
+                            indexNo = tds.textAt( 0),
+                            sex = tds.textAt( 1),
                             name = null,
-                            points = tds[2].text().trim(),
-                            division = tds[3].text().trim(),
-                            subjects = SubjectUtils.splitSubjectString(tds[4].text())
+                            points = tds.textAt( 2),
+                            division = tds.textAt( 3),
+                            subjectDetails = SubjectUtils.splitSubjectString(tds[4].text())
                         )
                     )
                 }
             }
         }
+
+        return results
     }
+
+    fun Elements.textAt(index: Int): String =
+        this[index].text().trim()
 }

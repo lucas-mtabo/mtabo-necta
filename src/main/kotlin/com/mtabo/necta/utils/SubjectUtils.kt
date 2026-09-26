@@ -1,6 +1,6 @@
 package necta.utils
 
-import com.mtabo.necta.models.Subject
+import com.mtabo.necta.models.SubjectDetail
 import org.jsoup.nodes.Element
 
 
@@ -17,10 +17,10 @@ object SubjectUtils {
      * Input:  "CIV-'A' GEO-'B' ENG-'C'"
      * Output: [SubjectResult("CIV", "A"), SubjectResult("GEO", "B"), SubjectResult("ENG", "C")]
      */
-    fun splitSubjectString(subjectsRaw: String?): List<Subject> {
+    fun splitSubjectString(subjectsRaw: String?): List<SubjectDetail> {
         if (subjectsRaw.isNullOrBlank()) return emptyList()
 
-        val subjectDetails = mutableListOf<Subject>()
+        val subjectDetailDetails = mutableListOf<SubjectDetail>()
 
         // Handle two formats:
         // 1. "CIV-'A', ENG-'B'"
@@ -34,10 +34,10 @@ object SubjectUtils {
 
             // Normalize: capitalize first letters of words
             subjectName = subjectName.split(" ").joinToString(" ")
-            subjectDetails.add(Subject(subjectName, grade))
+            subjectDetailDetails.add(SubjectDetail(subjectName, grade))
         }
 
-        return subjectDetails
+        return subjectDetailDetails
     }
 
     /**
@@ -46,7 +46,7 @@ object SubjectUtils {
      * Detailed subject string contains average grade inside as last element
      * Prevents crashes if subjectDetails is empty.
      */
-    fun splitGradeFromSubjects(subjects: Element): Pair<String, List<Subject>> {
+    fun splitGradeFromSubjects(subjects: Element): Pair<String, List<SubjectDetail>> {
         val subjectDetails = splitSubjectString(subjects.text())
         return if (subjectDetails.isNotEmpty()) {
             subjectDetails.last().grade to subjectDetails.dropLast(1)
@@ -60,7 +60,7 @@ object SubjectUtils {
      * Extract and clean subject names header (5th column to 2nd from last)
      * Then combines respective subject score to name from result rows
      */
-    fun combineSubjectAndScore(tableHeaders: List<String>, resultRows: List<String>): List<Subject> {
+    fun combineSubjectAndScore(tableHeaders: List<String>, resultRows: List<String>): List<SubjectDetail> {
         val subjectNames = tableHeaders.drop(4).dropLast(2).map {
             it.replace(Regex("\\s+"), " ")
                 .replace(".", "").trim()
@@ -70,7 +70,7 @@ object SubjectUtils {
             .drop(4)
             .dropLast(2)
             .mapIndexed { i, grade ->
-                Subject(subjectNames.getOrElse(i) { "SUBJECT$i" }, grade.trim())
+                SubjectDetail(subjectNames.getOrElse(i) { "SUBJECT$i" }, grade.trim())
             }
             .filter { it.grade.isNotEmpty() } // removes subject result without score
     }

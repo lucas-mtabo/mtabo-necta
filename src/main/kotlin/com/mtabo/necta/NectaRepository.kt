@@ -1,23 +1,25 @@
-package com.mtabo.necta.core
+package com.mtabo.necta
 
+import com.mtabo.necta.client.FetchResult
+import com.mtabo.necta.client.JsoupClient
 import com.mtabo.necta.utils.TableUtils
 import com.mtabo.necta.models.District
-import com.mtabo.necta.models.NectaExam
+import com.mtabo.necta.models.Exam
 import com.mtabo.necta.models.Region
 import com.mtabo.necta.models.School
 import com.mtabo.necta.models.StudentResult
-import com.mtabo.necta.parser.CseeAcseeParser
-import com.mtabo.necta.parser.FtnaParser
+import com.mtabo.necta.parser.result.CseeAcseeParser
+import com.mtabo.necta.parser.result.FtnaParser
 import com.mtabo.necta.parser.PerformanceParser
-import com.mtabo.necta.parser.PsleParser
+import com.mtabo.necta.parser.result.PsleParser
 import com.mtabo.necta.parser.parseSchools
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import com.mtabo.necta.parser.SfnaParser
+import com.mtabo.necta.parser.result.SfnaParser
 import com.mtabo.necta.parser.parseDistricts
 import com.mtabo.necta.parser.parseRegions
 import com.mtabo.necta.url.UrlProvider
-import org.example.com.mtabo.necta.models.SchoolPerformance
+import com.mtabo.necta.models.SchoolPerformance
 import org.jsoup.nodes.Document
 
 class NectaRepository  (
@@ -27,18 +29,22 @@ class NectaRepository  (
 
     // --- Regions ---
     suspend fun fetchRegions(
-        exam: NectaExam,
+        exam: Exam,
         year: Int
     ): FetchResult<List<Region>> {
 
         val url = urlProvider.getRegionListUrl(exam, year)
+            ?: return FetchResult.Error.Http(
+                statusCode = 404,
+                message = "Region list not found for $exam in $year"
+            )
 
         return fetchAndParse(url, ::parseRegions)
     }
 
     // --- Districts ---
     suspend fun fetchDistricts(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         regionCode: String
     ): FetchResult<List<District>> {
@@ -50,14 +56,14 @@ class NectaRepository  (
 
     // --- Schools ---
     suspend fun fetchSchools(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         districtCode: String?
     ): FetchResult<List<School>> {
 
         val url = districtCode?.let {
             urlProvider.getSchoolListUrl(exam, year, it)
-        } ?: urlProvider.getSchoolListUrl(exam, year)
+        }
 
         var lastError: FetchResult.Error? = null
         val retries = 2
@@ -91,10 +97,10 @@ class NectaRepository  (
 
     // --- School Results (Flow streaming) ---
     suspend fun fetchSchoolResult(
-        exam: NectaExam,
+        exam: Exam,
         year: Int,
         schoolCode: String
-    ): FetchResult<SchoolResultsStream> {
+    ): FetchResult<> {
 
         val url = urlProvider.getSchoolResultsUrl(exam, year, schoolCode)
 
@@ -106,23 +112,23 @@ class NectaRepository  (
                 val performance = PerformanceParser
                     .parsePerformance(doc, exam, year)
 
-                val students: Flow<StudentResult> = when (exam) {
+                val students: List<StudentResult> = when (exam) {
 
-                    NectaExam.ACSEE, NectaExam.CSEE ->
+                    Exam.ACSEE, Exam.CSEE ->
                         CseeAcseeParser.parseResults(
                             TableUtils.fetchCseeResultTable(doc)
                         )
 
-                    NectaExam.FTNA ->
+                    Exam.FTNA ->
                         FtnaParser.parseResults(doc, year)
 
-                    NectaExam.PSLE ->
+                    Exam.PSLE ->
                         PsleParser.parseResults(
                             TableUtils.fetchPsleResultTable(doc), year
                         )
 
-                    NectaExam.SFNA ->
-                        SfnaParser.parseResultsFlow(doc, year)
+                    Exam.SFNA ->
+                        SfnaParser.parseResults(doc, year)
                 }
 
                 FetchResult.Success(
@@ -157,9 +163,3 @@ class NectaRepository  (
         }
     }
 }
-
-// --- Domain wrapper ---
-data class SchoolResultsStream(
-    val performance: SchoolPerformance,
-    val students: Flow<StudentResult>
-)

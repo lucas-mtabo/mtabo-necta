@@ -2,10 +2,7 @@ package com.mtabo.necta.models
 
 import kotlinx.serialization.Serializable
 
-
 @Serializable
-data class SchoolPerformance(
-    val performanceItems: List<PerformanceItem>
+data class PerformanceItem(
+    val values: List<String>
 )
-
-
