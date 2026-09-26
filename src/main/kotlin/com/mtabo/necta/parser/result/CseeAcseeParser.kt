@@ -2,15 +2,18 @@ package com.mtabo.necta.parser.result
 
 
 import com.mtabo.necta.models.StudentResult
+import com.mtabo.necta.utils.TableUtils
 import necta.utils.SubjectUtils
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 
 
 object CseeAcseeParser {
 
-    fun parseResults(rows: List<Element>): List<StudentResult.CseeOrAcseeResult> {
+    fun parseResults(doc: Document): List<StudentResult.CseeOrAcseeResult> {
 
+        val rows: List<Element> = TableUtils.fetchCseeResultTable(doc)
         val results = mutableListOf<StudentResult.CseeOrAcseeResult>()
 
         for (tr in rows) {

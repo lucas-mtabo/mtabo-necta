@@ -2,27 +2,19 @@ package com.mtabo.necta
 
 import com.mtabo.necta.client.FetchResult
 import com.mtabo.necta.client.JsoupClient
-import com.mtabo.necta.utils.TableUtils
-import com.mtabo.necta.models.District
-import com.mtabo.necta.models.Exam
-import com.mtabo.necta.models.Region
-import com.mtabo.necta.models.School
-import com.mtabo.necta.models.StudentResult
-import com.mtabo.necta.parser.result.CseeAcseeParser
-import com.mtabo.necta.parser.result.FtnaParser
+import com.mtabo.necta.models.*
 import com.mtabo.necta.parser.PerformanceParser
-import com.mtabo.necta.parser.result.PsleParser
-import com.mtabo.necta.parser.parseSchools
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import com.mtabo.necta.parser.result.SfnaParser
 import com.mtabo.necta.parser.parseDistricts
 import com.mtabo.necta.parser.parseRegions
+import com.mtabo.necta.parser.parseSchools
+import com.mtabo.necta.parser.result.CseeAcseeParser
+import com.mtabo.necta.parser.result.FtnaParser
+import com.mtabo.necta.parser.result.PsleParser
+import com.mtabo.necta.parser.result.SfnaParser
 import com.mtabo.necta.url.UrlProvider
-import com.mtabo.necta.models.SchoolPerformance
 import org.jsoup.nodes.Document
 
-class NectaRepository  (
+class NectaRepository(
     private val jsoupClient: JsoupClient,
     private val urlProvider: UrlProvider
 ) {
@@ -31,135 +23,161 @@ class NectaRepository  (
     suspend fun fetchRegions(
         exam: Exam,
         year: Int
-    ): FetchResult<List<Region>> {
-
-        val url = urlProvider.getRegionListUrl(exam, year)
-            ?: return FetchResult.Error.Http(
-                statusCode = 404,
-                message = "Region list not found for $exam in $year"
-            )
-
-        return fetchAndParse(url, ::parseRegions)
-    }
+    ): NectaResult<List<Region>> =
+        fetch(
+            url = urlProvider.getRegionListUrl(exam, year),
+            parser = ::parseRegions
+        )
 
     // --- Districts ---
     suspend fun fetchDistricts(
         exam: Exam,
         year: Int,
         regionCode: String
-    ): FetchResult<List<District>> {
-
-        val url = urlProvider.getDistrictListUrl(exam, year, regionCode)
-
-        return fetchAndParse(url, ::parseDistricts)
-    }
+    ): NectaResult<List<District>> =
+        fetch(
+            url = urlProvider.getDistrictListUrl(
+                exam,
+                year,
+                regionCode
+            ),
+            parser = ::parseDistricts
+        )
 
     // --- Schools ---
     suspend fun fetchSchools(
         exam: Exam,
         year: Int,
         districtCode: String?
-    ): FetchResult<List<School>> {
-
-        val url = districtCode?.let {
-            urlProvider.getSchoolListUrl(exam, year, it)
+    ): NectaResult<List<School>> =
+        fetch(
+            url = urlProvider.getSchoolListUrl(
+                exam,
+                year,
+                districtCode
+            )
+        ) { doc ->
+            parseSchools(doc, exam)
         }
 
-        var lastError: FetchResult.Error? = null
-        val retries = 2
-
-        repeat(retries + 1) { attempt ->
-
-            when (val result = jsoupClient.fetchDocument(url)) {
-
-                is FetchResult.Success -> {
-                    val schools = parseSchools(result.data, exam)
-                    return FetchResult.Success(schools)
-                }
-
-                is FetchResult.Error.Timeout,
-                is FetchResult.Error.Network -> {
-                    lastError = result
-                    if (attempt < retries) delay(500L * (attempt + 1))
-                }
-
-                is FetchResult.Error.Http,
-                is FetchResult.Error.Unknown -> {
-                    return result
-                }
-            }
-        }
-
-        return lastError ?: FetchResult.Error.Unknown(
-            RuntimeException("Failed to fetch schools after retries")
-        )
-    }
-
-    // --- School Results (Flow streaming) ---
+    // --- School Results ---
     suspend fun fetchSchoolResult(
         exam: Exam,
         year: Int,
         schoolCode: String
-    ): FetchResult<> {
+    ): NectaResult<List<StudentResult>> =
+        fetch(
+            url = urlProvider.getSchoolResultsUrl(
+                exam,
+                year,
+                schoolCode
+            )
+        ) { doc ->
+            parseStudentResults(
+                doc = doc,
+                exam = exam,
+                year = year
+            )
+        }
 
-        val url = urlProvider.getSchoolResultsUrl(exam, year, schoolCode)
+    // --- School Performance ---
+    suspend fun fetchSchoolPerformance(
+        exam: Exam,
+        year: Int,
+        schoolCode: String
+    ): NectaResult<SchoolPerformance> =
+        fetch(
+            url = urlProvider.getSchoolResultsUrl(
+                exam,
+                year,
+                schoolCode
+            )
+        ) { doc ->
+            PerformanceParser.parsePerformance(
+                doc,
+                exam,
+                year
+            )
+        }
 
-        return when (val result = jsoupClient.fetchDocument(url)) {
+    /**
+     * Common fetch pipeline:
+     *
+     * 1. Validate URL
+     * 2. Fetch document
+     * 3. Parse document
+     * 4. Convert FetchResult to NectaResult
+     */
+    private suspend fun <T> fetch(
+        url: String?,
+        parser: suspend (Document) -> T
+    ): NectaResult<T> {
 
-            is FetchResult.Success -> {
-                val doc = result.data
+        val resolvedUrl = url
+            ?: return NectaResult.NotFound(
+                "The URL is not available or may be unreachable"
+            )
 
-                val performance = PerformanceParser
-                    .parsePerformance(doc, exam, year)
+        return when (val result = jsoupClient.fetchDocument(resolvedUrl)) {
 
-                val students: List<StudentResult> = when (exam) {
-
-                    Exam.ACSEE, Exam.CSEE ->
-                        CseeAcseeParser.parseResults(
-                            TableUtils.fetchCseeResultTable(doc)
-                        )
-
-                    Exam.FTNA ->
-                        FtnaParser.parseResults(doc, year)
-
-                    Exam.PSLE ->
-                        PsleParser.parseResults(
-                            TableUtils.fetchPsleResultTable(doc), year
-                        )
-
-                    Exam.SFNA ->
-                        SfnaParser.parseResults(doc, year)
-                }
-
-                FetchResult.Success(
-                    SchoolResultsStream(
-                        performance = performance,
-                        students = students
-                    )
+            is FetchResult.Success ->
+                NectaResult.Success(
+                    parser(result.data)
                 )
-            }
 
-            is FetchResult.Error -> result
+            is FetchResult.Error.Network ->
+                NectaResult.Network(
+                    "Unable to connect to NECTA"
+                )
+
+            is FetchResult.Error.Timeout ->
+                NectaResult.Network(
+                    "Connection to NECTA timed out"
+                )
+
+            is FetchResult.Error.Http ->
+                NectaResult.Error(
+                    result.message
+                        ?: "NECTA returned HTTP ${result.statusCode}"
+                )
+
+            is FetchResult.Error.Unknown ->
+                NectaResult.Error(
+                    result.exception.message
+                        ?: "An unexpected error occurred"
+                )
         }
     }
 
+    /**
+     * Selects the appropriate parser for each examination.
+     */
+    private fun parseStudentResults(
+        doc: Document,
+        exam: Exam,
+        year: Int
+    ): List<StudentResult> =
+        when (exam) {
 
+            Exam.ACSEE,
+            Exam.CSEE ->
+                CseeAcseeParser.parseResults(doc)
 
-    private suspend fun <T> fetchAndParse(
-        url: String,
-        parser: suspend (Document) -> T
-    ): FetchResult<T> =
-        when (val result = jsoupClient.fetchDocument(url)) {
-            is FetchResult.Success -> FetchResult.Success(parser(result.data))
-            is FetchResult.Error -> result
+            Exam.FTNA ->
+                FtnaParser.parseResults(doc, year)
+
+            Exam.PSLE ->
+                PsleParser.parseResults(doc, year)
+
+            Exam.SFNA ->
+                SfnaParser.parseResults(doc, year)
         }
 
     companion object {
-        fun create(): NectaRepository {
-            return NectaRepository(
+        fun create(): NectaRepository =
+            NectaRepository(
                 jsoupClient = JsoupClient,
                 urlProvider = UrlProvider
             )
-        }
     }
 }

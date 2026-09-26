@@ -5,6 +5,7 @@ import com.mtabo.necta.models.Exam
 import com.mtabo.necta.models.Region
 import com.mtabo.necta.models.School
 import com.mtabo.necta.client.FetchResult
+import com.mtabo.necta.models.StudentResult
 import com.mtabo.necta.url.ParsedUrlResolver.getResultsEntryUrl
 
 object NectaClient {
@@ -19,7 +20,7 @@ object NectaClient {
     suspend fun fetchRegions(
         exam: Exam,
         year: Int
-    ): FetchResult<List<Region>> {
+    ): NectaResult<List<Region>> {
         return repository.fetchRegions(exam, year)
     }
 
@@ -31,7 +32,7 @@ object NectaClient {
         exam: Exam,
         year: Int,
         regionCode: String
-    ): FetchResult<List<District>> {
+    ): NectaResult<List<District>> {
         return repository.fetchDistricts(exam, year, regionCode)
     }
 
@@ -43,7 +44,7 @@ object NectaClient {
         exam: Exam,
         year: Int,
         districtCode: String? = null
-    ): FetchResult<List<School>> {
+    ): NectaResult<List<School>> {
         return repository.fetchSchools(exam, year, districtCode)
     }
 
@@ -55,7 +56,7 @@ object NectaClient {
         exam: Exam,
         year: Int,
         schoolCode: String
-    ): FetchResult<SchoolResultsStream> {
+    ): NectaResult<List<StudentResult>> {
         return repository.fetchSchoolResult(exam, year, schoolCode)
     }
 

@@ -1,13 +1,17 @@
 package com.mtabo.necta.parser.result
 
 import com.mtabo.necta.models.StudentResult
+import com.mtabo.necta.utils.TableUtils.fetchPsleResultTable
 import necta.utils.SubjectUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 object PsleParser {
-    fun parseResults(rows: List<Element>, year: Int): List<StudentResult.PsleAndSfnaResult> {
+    fun parseResults(doc: Document , year: Int): List<StudentResult.PsleAndSfnaResult> {
+
+        val rows: List<Element> = fetchPsleResultTable(doc)
         val results = mutableListOf<StudentResult.PsleAndSfnaResult>()
 
         for (tr in rows) {
