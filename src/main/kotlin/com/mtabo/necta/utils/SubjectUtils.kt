@@ -1,4 +1,4 @@
-package necta.utils
+package com.mtabo.necta.utils
 
 import com.mtabo.necta.models.SubjectDetail
 import org.jsoup.nodes.Element

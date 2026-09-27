@@ -72,14 +72,12 @@ object JsoupClient {
 
     suspend fun isUrlReachable(
         url: String,
-        timeout: Int = DEFAULT_TIMEOUT,
-        userAgent: String = DEFAULT_USER_AGENT
     ): Boolean = withContext(Dispatchers.IO) {
 
         try {
             val response = Jsoup.connect(url)
-                .userAgent(userAgent)
-                .timeout(timeout)
+                .userAgent(DEFAULT_USER_AGENT)
+                .timeout(DEFAULT_TIMEOUT)
                 .followRedirects(true)
                 .ignoreHttpErrors(true)
                 .method(Connection.Method.HEAD)

@@ -32,12 +32,12 @@ data class JsonDistrictData(
 )
 
 /**
- * Function for scraping, parsing, and processing regions and districts to a json file.
+ * Function for scraping, parsing, and processing regions and districts to a JSON file.
  *
  */
 suspend fun collectRegionsAndDistrictsWithHistory(
     startYear: Int = 2013,
-    endYear: Int = 2025
+    endYear: Int = 2020
 ): Pair<List<JsonRegionData>, List<JsonDistrictData>> {
 
     val regions = mutableListOf<JsonRegionData>()
@@ -85,7 +85,7 @@ suspend fun collectRegionsAndDistrictsWithHistory(
 }
 
 suspend fun fetchRegionsForYear(year: Int): List<Region>? {
-    val url = StaticUrlResolver.resolveRegionListUrl(Exam.PSLE, year) ?: return null
+    val url = StaticUrlResolver.resolveRegionListUrl(Exam.PSLE, year)
 
     return when (val result = JsoupClient.fetchDocument(url)) {
         is FetchResult.Success -> parseRegions(result.data)
@@ -97,7 +97,7 @@ suspend fun fetchRegionsForYear(year: Int): List<Region>? {
 }
 
 suspend fun fetchDistrictsForYear(year: Int, regionCode: String): List<District>? {
-    val url = StaticUrlResolver.resolveDistrictListUrl(Exam.PSLE, year, regionCode) ?: return null
+    val url = StaticUrlResolver.resolveDistrictListUrl(Exam.PSLE, year, regionCode)
 
     return when (val result = JsoupClient.fetchDocument(url)) {
         is FetchResult.Success -> parseDistricts(result.data)

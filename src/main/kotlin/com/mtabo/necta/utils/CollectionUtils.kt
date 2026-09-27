@@ -1,4 +1,4 @@
-package necta.utils
+package com.mtabo.necta.utils
 
 /**
  * Returns the first non-null value from the map for the given keys.

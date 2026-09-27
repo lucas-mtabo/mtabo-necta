@@ -2,9 +2,7 @@ package com.mtabo.necta.parser.result
 
 import com.mtabo.necta.models.StudentResult
 import com.mtabo.necta.utils.TableUtils.fetchPsleResultTable
-import necta.utils.SubjectUtils
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import com.mtabo.necta.utils.SubjectUtils
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 

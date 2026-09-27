@@ -3,7 +3,7 @@ package com.mtabo.necta.parser.result
 
 import com.mtabo.necta.models.StudentResult
 import com.mtabo.necta.utils.TableUtils
-import necta.utils.SubjectUtils
+import com.mtabo.necta.utils.SubjectUtils
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements

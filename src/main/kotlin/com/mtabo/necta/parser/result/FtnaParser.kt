@@ -4,10 +4,8 @@ import com.mtabo.necta.models.StudentResult
 import com.mtabo.necta.utils.TableUtils.fetchCseeResultTable
 import com.mtabo.necta.utils.TableUtils.fetchLegacyFtnaResultTable
 import com.mtabo.necta.utils.TableUtils.getLegacyTableHeaders
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import necta.utils.SubjectUtils
-import necta.utils.SubjectUtils.combineSubjectAndScore
+import com.mtabo.necta.utils.SubjectUtils
+import com.mtabo.necta.utils.SubjectUtils.combineSubjectAndScore
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 

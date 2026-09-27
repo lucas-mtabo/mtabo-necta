@@ -4,7 +4,7 @@ import com.mtabo.necta.models.Exam
 import com.mtabo.necta.utils.TableUtils.getLegacyFtnaPerformanceTable
 import com.mtabo.necta.utils.TableUtils.getPerformanceTable
 import com.mtabo.necta.utils.TableUtils.getSfnaPeformanceTable
-import necta.utils.pick
+import com.mtabo.necta.utils.pick
 import com.mtabo.necta.models.PerformanceItem
 import com.mtabo.necta.models.SchoolPerformance
 import org.jsoup.nodes.Document

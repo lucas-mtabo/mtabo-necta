@@ -1,11 +1,6 @@
 package com.mtabo.necta
 
-import com.mtabo.necta.models.District
-import com.mtabo.necta.models.Exam
-import com.mtabo.necta.models.Region
-import com.mtabo.necta.models.School
-import com.mtabo.necta.client.FetchResult
-import com.mtabo.necta.models.StudentResult
+import com.mtabo.necta.models.*
 import com.mtabo.necta.url.ParsedUrlResolver.getResultsEntryUrl
 
 object NectaClient {
@@ -49,7 +44,7 @@ object NectaClient {
     }
 
     // =========================================================
-    // RESULTS (STREAMING)
+    // RESULTS
     // =========================================================
 
     suspend fun fetchSchoolResults(
@@ -58,6 +53,18 @@ object NectaClient {
         schoolCode: String
     ): NectaResult<List<StudentResult>> {
         return repository.fetchSchoolResult(exam, year, schoolCode)
+    }
+
+    // =========================================================
+    // Performance
+    // =========================================================
+
+    suspend fun fetchSchoolPerformance(
+        exam: Exam,
+        year: Int,
+        schoolCode: String
+    ): NectaResult<SchoolPerformance> {
+        return repository.fetchSchoolPerformance(exam, year, schoolCode)
     }
 
 
