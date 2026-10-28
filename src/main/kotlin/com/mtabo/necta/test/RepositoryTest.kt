@@ -17,9 +17,9 @@ fun main() {
 
     // testFetchSchools(repository)
 
-    // testFetchSchoolResults(repository)
+     testFetchSchoolResults(repository)
 
-     testFetchSchoolPerformance(repository)
+    // testFetchSchoolPerformance(repository)
 }
 
 
@@ -63,8 +63,8 @@ fun testFetchSchoolResults(repository: MtaboApi) = runBlocking {
     println("\n========== TEST: FETCH SCHOOL RESULTS ==========")
 
     val result = repository.fetchSchoolResult(
-        exam = Exam.CSEE,
-        year = 2025,
+        exam = Exam.ACSEE,
+        year = 2026,
         schoolCode = "S0136"
     )
 
