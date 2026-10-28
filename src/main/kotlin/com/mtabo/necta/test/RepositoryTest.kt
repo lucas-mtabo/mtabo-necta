@@ -1,13 +1,13 @@
 package com.mtabo.necta.test
 
-import com.mtabo.necta.NectaRepository
+import com.mtabo.necta.MtaboApi
 import com.mtabo.necta.NectaResult
 import com.mtabo.necta.models.Exam
 import kotlinx.coroutines.runBlocking
 
 fun main() {
 
-    val repository = NectaRepository.create()
+    val repository = MtaboApi.create()
 
     // testFetchRegions(repository)
 
@@ -24,7 +24,7 @@ fun main() {
 
 
 
-fun testFetchRegions(repository: NectaRepository) = runBlocking {
+fun testFetchRegions(repository: MtaboApi) = runBlocking {
     println("\n========== TEST: FETCH REGIONS  FOR PSLE AND SFNA ONLY==========")
 
     val result = repository.fetchRegions(
@@ -35,7 +35,7 @@ fun testFetchRegions(repository: NectaRepository) = runBlocking {
     printlnResult(result)
 }
 
-fun testFetchDistricts(repository: NectaRepository) = runBlocking {
+fun testFetchDistricts(repository: MtaboApi) = runBlocking {
     println("\n========== TEST: FETCH DISTRICTS for PSLE and SFNA only==========")
 
     val result = repository.fetchDistricts(
@@ -47,7 +47,7 @@ fun testFetchDistricts(repository: NectaRepository) = runBlocking {
     printlnResult(result)
 }
 
-fun testFetchSchools(repository: NectaRepository) = runBlocking {
+fun testFetchSchools(repository: MtaboApi) = runBlocking {
     println("\n========== TEST: FETCH SCHOOLS ==========")
 
     val result = repository.fetchSchools(
@@ -59,7 +59,7 @@ fun testFetchSchools(repository: NectaRepository) = runBlocking {
     printlnResult(result)
 }
 
-fun testFetchSchoolResults(repository: NectaRepository) = runBlocking {
+fun testFetchSchoolResults(repository: MtaboApi) = runBlocking {
     println("\n========== TEST: FETCH SCHOOL RESULTS ==========")
 
     val result = repository.fetchSchoolResult(
@@ -71,7 +71,7 @@ fun testFetchSchoolResults(repository: NectaRepository) = runBlocking {
     printlnResult(result)
 }
 
-fun testFetchSchoolPerformance(repository: NectaRepository) = runBlocking {
+fun testFetchSchoolPerformance(repository: MtaboApi) = runBlocking {
     println("\n========== TEST: FETCH SCHOOL PERFORMANCE ==========")
 
     val result = repository.fetchSchoolPerformance(

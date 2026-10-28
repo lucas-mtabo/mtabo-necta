@@ -11,12 +11,13 @@ import com.mtabo.necta.parser.result.CseeAcseeParser
 import com.mtabo.necta.parser.result.FtnaParser
 import com.mtabo.necta.parser.result.PsleParser
 import com.mtabo.necta.parser.result.SfnaParser
+import com.mtabo.necta.url.ParsedUrlResolver.getResultsEntryUrl
 import com.mtabo.necta.url.UrlProvider
 import org.jsoup.nodes.Document
 
-class NectaRepository(
-    private val jsoupClient: JsoupClient,
-    private val urlProvider: UrlProvider
+class MtaboApi(
+    private val jsoupClient: JsoupClient = JsoupClient,
+    private val urlProvider: UrlProvider = UrlProvider
 ) {
 
     // --- Regions ---
@@ -173,9 +174,24 @@ class NectaRepository(
                 SfnaParser.parseResults(doc, year)
         }
 
+    /**
+     * Checks whether exam results for a given exam type and year is available.
+     *
+     * Note: This method does not distinguish between different failure causes.
+     * Any error is treated as "results not released".
+     */
+    suspend fun isResultAvailable(exam: Exam, year: Int): Boolean {
+        return try {
+            getResultsEntryUrl(exam, year)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     companion object {
-        fun create(): NectaRepository =
-            NectaRepository(
+        fun create(): MtaboApi =
+            MtaboApi(
                 jsoupClient = JsoupClient,
                 urlProvider = UrlProvider
             )
